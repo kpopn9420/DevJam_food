@@ -117,7 +117,7 @@
             v-for="n in 12"
             :key="n"
             title="Delicious Pizza"
-            role="viewer"
+            role="admin"
             description="A cheesy and delightful pizza topped with pepperoni."
         />
     </div>

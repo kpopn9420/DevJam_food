@@ -1,7 +1,7 @@
 <script setup>
   import { ref } from 'vue'
 
-  const companyName = ref('ClassBud')
+  const companyName = ref('GreenBite')
   const year = ref(new Date().getFullYear())
   const contactInfo = ref({
     title: '聯絡我們',

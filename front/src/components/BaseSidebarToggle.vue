@@ -5,7 +5,7 @@
       to="/"
       class="text-base text-gray-700 hover:text-gray-900 p-2 font-semibold flex items-center"
       ><img src="/src/assets/logo.png" alt="logo" class="w-6 h-6 mr-2" />
-      ClassBud
+      GreenBite
     </router-link>
     <button
       class="text-black rounded-lg p-1 hover:bg-gray-100 transition-all duration-100 ease-in-out transform"

@@ -2,7 +2,7 @@
   import { ref } from 'vue'
   import BaseButtonOutlined from './BaseButtonOutlined.vue'
 
-  const websiteName = ref('ClassBud')
+  const websiteName = ref('GreenBite')
 </script>
 
 <!--Testing-->
