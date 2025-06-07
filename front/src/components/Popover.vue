@@ -1,15 +1,16 @@
+
 <template>
-  <div class="relative top-16 w-full max-w-sm px-4">
+  <div class="relative">
     <Popover v-slot="{ open }" class="relative">
-      <!-- 🔸 透明按鈕加 icon -->
+      <!-- ✅ 使用純文字 ⋮ 測試按鈕是否正常顯示 -->
       <PopoverButton
         class="p-2 rounded-full hover:bg-gray-100 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500"
         aria-label="More options"
       >
-        <EllipsisHorizontalIcon class="h-5 w-5 text-gray-600 rotate-90" />
+        <span class="text-xl text-gray-700">⋮</span>
       </PopoverButton>
 
-      <!-- 🔹 往上顯示的 dropdown panel -->
+      <!-- dropdown panel -->
       <transition
         enter-active-class="transition duration-200 ease-out"
         enter-from-class="translate-y-2 opacity-0"
@@ -69,7 +70,6 @@
 
 <script setup>
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
-import { EllipsisHorizontalIcon } from '@heroicons/vue/20/solid'
 
 defineProps({
   options: {
