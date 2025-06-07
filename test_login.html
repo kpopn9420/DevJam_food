@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>GDG Firebase Google 登入測試</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <h2>Google 登入測試頁面</h2>
+  <button onclick="googleLogin()">🔐 使用 Google 登入</button>
+  <pre id="result"></pre>
+
+  <script>
+    // ✅ 初始化 Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCN25Bd28KyvxpJt3P-YPkSTsLnupKbfQU",
+      authDomain: "gdg-foodshare.firebaseapp.com",
+      projectId: "gdg-foodshare",
+      storageBucket: "gdg-foodshare.firebasestorage.app",
+      messagingSenderId: "202811512487",
+      appId: "1:202811512487:web:75d7b523db4daf36a6ad82",
+      measurementId: "G-2FDN861HWZ"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // ✅ Google 登入流程
+    async function googleLogin() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        const result = await auth.signInWithPopup(provider);
+        const token = await result.user.getIdToken();
+
+        document.getElementById("result").textContent = "✅ 成功登入\n\nID Token:\n" + token;
+
+        // ✅ 傳 token 到後端測試驗證
+        const resp = await fetch("http://127.0.0.1:5001/secure", {
+          headers: { Authorization: "Bearer " + token }
+        });
+
+        const data = await resp.json();
+        document.getElementById("result").textContent += "\n\n🎯 後端回應：\n" + JSON.stringify(data, null, 2);
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById("result").textContent = "❌ 登入失敗：" + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
