@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🗺️ 地址轉換測試</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+        }
+        
+        .result {
+            background: #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .quick-addresses {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .quick-addr {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            padding: 6px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .quick-addr:hover {
+            background: #2196f3;
+            color: white;
+        }
+        
+        .coord-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .coord-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ 地址轉換測試工具</h1>
+        
+        <!-- 地址轉經緯度 -->
+        <div class="test-section">
+            <h3>📍 地址 → 經緯度</h3>
+            
+            <label for="address">輸入地址：</label>
+            <div class="quick-addresses">
+                <span class="quick-addr" onclick="setAddress('台北101')">台北101</span>
+                <span class="quick-addr" onclick="setAddress('台北車站')">台北車站</span>
+                <span class="quick-addr" onclick="setAddress('西門町')">西門町</span>
+                <span class="quick-addr" onclick="setAddress('國立台灣大學')">台大</span>
+                <span class="quick-addr" onclick="setAddress('高雄85大樓')">高雄85大樓</span>
+                <span class="quick-addr" onclick="setAddress('台中火車站')">台中火車站</span>
+            </div>
+            <input type="text" id="address" placeholder="例如: 台北市信義區信義路五段7號" />
+            
+            <button onclick="testAddressToCoords()">🔍 轉換為經緯度</button>
+            <button onclick="testBatchGeocode()">📊 批量測試</button>
+            
+            <div class="loading" id="loading1">
+                <div class="spinner"></div>
+                <p>轉換中...</p>
+            </div>
+            <div id="result1" class="result" style="display: none;"></div>
+        </div>
+        
+        <!-- 經緯度轉地址 -->
+        <div class="test-section">
+            <h3>🎯 經緯度 → 地址</h3>
+            
+            <div class="coord-display">
+                <div>
+                    <label for="lat">緯度 (Latitude)：</label>
+                    <input type="number" id="lat" step="0.000001" placeholder="25.0330" />
+                </div>
+                <div>
+                    <label for="lng">經度 (Longitude)：</label>
+                    <input type="number" id="lng" step="0.000001" placeholder="121.5654" />
+                </div>
+            </div>
+            
+            <div class="quick-addresses">
+                <span class="quick-addr" onclick="setCoords(25.0330, 121.5654)">台北101</span>
+                <span class="quick-addr" onclick="setCoords(25.0478, 121.5319)">台北車站</span>
+                <span class="quick-addr" onclick="setCoords(22.6273, 120.3014)">高雄85大樓</span>
+                <span class="quick-addr" onclick="setCoords(24.1367, 120.6852)">台中火車站</span>
+            </div>
+            
+            <button onclick="testCoordsToAddress()">🔍 轉換為地址</button>
+            <button onclick="getCurrentLocation()">📱 取得我的位置</button>
+            
+            <div class="loading" id="loading2">
+                <div class="spinner"></div>
+                <p>轉換中...</p>
+            </div>
+            <div id="result2" class="result" style="display: none;"></div>
+        </div>
+        
+        <!-- 新增食物測試 -->
+        <div class="test-section">
+            <h3>🍽️ 新增食物測試 (含地址轉換)</h3>
+            
+            <label for="foodTitle">食物名稱：</label>
+            <input type="text" id="foodTitle" placeholder="新鮮蘋果" />
+            
+            <label for="foodDesc">描述：</label>
+            <input type="text" id="foodDesc" placeholder="剛買的蘋果，吃不完分享" />
+            
+            <label for="foodQuantity">數量：</label>
+            <input type="number" id="foodQuantity" placeholder="5" />
+            
+            <label for="foodCategory">分類：</label>
+            <select id="foodCategory">
+                <option value="水果">水果</option>
+                <option value="麵包">麵包</option>
+                <option value="便當">便當</option>
+                <option value="飲品">飲品</option>
+                <option value="其他">其他</option>
+            </select>
+            
+            <label for="foodAddress">地址：</label>
+            <input type="text" id="foodAddress" placeholder="台北市大安區羅斯福路四段1號" />
+            
+            <label for="expireTime">到期時間：</label>
+            <input type="datetime-local" id="expireTime" />
+            
+            <button onclick="testCreateFood()">🍽️ 新增食物</button>
+            
+            <div class="loading" id="loading3">
+                <div class="spinner"></div>
+                <p>新增中...</p>
+            </div>
+            <div id="result3" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        function setAddress(addr) {
+            document.getElementById('address').value = addr;
+        }
+
+        function setCoords(lat, lng) {
+            document.getElementById('lat').value = lat;
+            document.getElementById('lng').value = lng;
+        }
+
+        function showLoading(id) {
+            document.getElementById(`loading${id}`).style.display = 'block';
+            document.getElementById(`result${id}`).style.display = 'none';
+        }
+
+        function hideLoading(id) {
+            document.getElementById(`loading${id}`).style.display = 'none';
+        }
+
+        function showResult(id, data, isError = false) {
+            hideLoading(id);
+            const resultElement = document.getElementById(`result${id}`);
+            resultElement.style.display = 'block';
+            resultElement.className = `result ${isError ? 'error' : 'success'}`;
+            resultElement.textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function testAddressToCoords() {
+            const address = document.getElementById('address').value.trim();
+            if (!address) {
+                alert('請輸入地址');
+                return;
+            }
+
+            showLoading(1);
+            
+            try {
+                const response = await fetch(`${API_BASE}/geocoding/address-to-coordinates`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ address: address })
+                });
+                
+                const data = await response.json();
+                showResult(1, data, !response.ok);
+                
+                // 如果成功，自動填入經緯度
+                if (data.status === 'success') {
+                    document.getElementById('lat').value = data.data.coordinates.lat;
+                    document.getElementById('lng').value = data.data.coordinates.lng;
+                }
+            } catch (error) {
+                showResult(1, { error: error.message }, true);
+            }
+        }
+
+        async function testCoordsToAddress() {
+            const lat = document.getElementById('lat').value;
+            const lng = document.getElementById('lng').value;
+            
+            if (!lat || !lng) {
+                alert('請輸入經緯度');
+                return;
+            }
+
+            showLoading(2);
+            
+            try {
+                const response = await fetch(`${API_BASE}/geocoding/coordinates-to-address`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lat: parseFloat(lat), lng: parseFloat(lng) })
+                });
+                
+                const data = await response.json();
+                showResult(2, data, !response.ok);
+            } catch (error) {
+                showResult(2, { error: error.message }, true);
+            }
+        }
+
+        async function testBatchGeocode() {
+            const addresses = [
+                '台北101',
+                '台北車站',
+                '高雄85大樓',
+                '台中火車站',
+                '不存在的地址123'
+            ];
+
+            showLoading(1);
+            
+            try {
+                const response = await fetch(`${API_BASE}/geocoding/batch-geocode`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ addresses: addresses })
+                });
+                
+                const data = await response.json();
+                showResult(1, data, !response.ok);
+            } catch (error) {
+                showResult(1, { error: error.message }, true);
+            }
+        }
+
+        async function testCreateFood() {
+            const foodData = {
+                owner_id: 1,
+                title: document.getElementById('foodTitle').value,
+                description: document.getElementById('foodDesc').value,
+                quantity: parseInt(document.getElementById('foodQuantity').value),
+                category: document.getElementById('foodCategory').value,
+                address: document.getElementById('foodAddress').value,
+                expire_time: document.getElementById('expireTime').value
+            };
+
+            // 驗證必要欄位
+            if (!foodData.title || !foodData.quantity || !foodData.address || !foodData.expire_time) {
+                alert('請填寫所有必要欄位');
+                return;
+            }
+
+            showLoading(3);
+            
+            try {
+                const response = await fetch(`${API_BASE}/foods`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(foodData)
+                });
+                
+                const data = await response.json();
+                showResult(3, data, !response.ok);
+            } catch (error) {
+                showResult(3, { error: error.message }, true);
+            }
+        }
+
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                showLoading(2);
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        document.getElementById('lat').value = lat;
+                        document.getElementById('lng').value = lng;
+                        
+                        hideLoading(2);
+                        showResult(2, {
+                            message: '成功取得位置',
+                            coordinates: { lat, lng },
+                            accuracy: position.coords.accuracy
+                        });
+                    },
+                    (error) => {
+                        hideLoading(2);
+                        showResult(2, { error: '無法取得位置: ' + error.message }, true);
+                    }
+                );
+            } else {
+                alert('瀏覽器不支援地理定位');
+            }
+        }
+
+        // 頁面載入時設定預設值
+        window.onload = function() {
+            // 設定預設過期時間（明天）
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(18, 0, 0, 0);
+            document.getElementById('expireTime').value = tomorrow.toISOString().slice(0, 16);
+            
+            console.log('🗺️ 地址轉換測試工具已載入');
+            console.log('確保後端服務正在 http://localhost:5000 運行');
+        };
+    </script>
+</body>
+</html>

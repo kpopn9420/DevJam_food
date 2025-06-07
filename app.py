@@ -1,34 +1,25 @@
-# app.py - 修復 CORS 問題並加入地圖功能
+# app.py - 完整整合地址轉換功能
 
-from flask import Flask, jsonify
-# app.py - 修復 CORS 問題
-import bcrypt
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
 from models import db, init_db
 from routes.food_routes import food_bp
 from models import db, Food, Reservation, User
 from routes.reservation_routes import reservation_bp
-from rating import rating_bp
 from routes.map_routes import map_bp
-from flask import Flask, request, jsonify
-# from firebase_auth import verify_firebase_token
-
+from routes.geocoding_routes import geocoding_bp
 
 app = Flask(__name__)
 
-# # 🔥 修復 CORS 設定
-# CORS(app, resources={
-#     r"/api/*": {
-#         "origins": "*",
-#         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-#         "allow_headers": ["Content-Type", "Authorization"]
-#     }
-# })
-# CORS(app, supports_credentials=True, origins=["http://localhost:5173"])
-CORS(app) 
-
-
+# 🔥 修復 CORS 設定
+CORS(app, resources={
+    r"/api/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 # Swagger UI 設定
 SWAGGER_URL = "/docs"
@@ -37,22 +28,22 @@ API_URL = "/static/openapi.yaml"
 swagger_bp = get_swaggerui_blueprint(
     SWAGGER_URL, API_URL, config={"app_name": "FoodShare API"}
 )
-app.register_blueprint(swagger_bp, url_prefix="/docs")
+app.register_blueprint(swagger_bp, url_prefix='/docs')
 # 本機 MySQL 設定（依照你自己的設定修改）
 # app.py
-app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:@localhost/foodsystem"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/foodsystem'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # 初始化資料庫
 init_db(app)
 
-# 註冊藍圖
+# 註冊所有藍圖
 app.register_blueprint(food_bp)
 app.register_blueprint(reservation_bp)
-app.register_blueprint(rating_bp)
-app.register_blueprint(map_bp)  # 🗺️ 新增地圖功能
+app.register_blueprint(map_bp)
+app.register_blueprint(geocoding_bp)  # 新增地理編碼路由
 
-# 🔥 添加全域錯誤處理器
+# 全域錯誤處理器
 @app.errorhandler(404)
 def not_found(error):
     return (
@@ -77,7 +68,7 @@ def bad_request(error):
     )
 
 
-# 🔥 添加全域 OPTIONS 處理器（作為後備）
+# 全域 OPTIONS 處理器
 @app.before_request
 def handle_preflight():
     if request.method == "OPTIONS":
@@ -87,31 +78,55 @@ def handle_preflight():
         response.headers.add("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         return response
 
-
 # 🔥 添加 API 根路徑
-@app.route("/api")
+@app.route('/api')
 def api_info():
     return jsonify({
         'message': 'FoodShare API',
-        'version': '1.1.0',
+        'version': '1.2.0',
         'status': 'running',
+        'features': [
+            '✅ 食物 CRUD 管理',
+            '✅ 預約系統',
+            '✅ 地圖功能',
+            '✅ 地址轉換 (免費)',
+            '✅ 免費 OpenStreetMap'
+        ],
         'endpoints': {
+            # 核心功能
             'foods': '/api/foods',
             'reservations': '/api/reservations',
-            'nearby_foods': '/api/nearby_foods',
-            'available_foods': '/api/available_foods',
-            'my_posted_foods': '/api/my_posted_foods',
-            'my_reservations': '/api/my_reservations',
-            'confirm_pickup': '/api/confirm_pickup',
-            # 🗺️ 地圖功能端點
+            
+            # 地圖功能
             'map_nearby_foods': '/api/map/nearby_foods',
             'map_food_clusters': '/api/map/food_clusters',
             'map_area_stats': '/api/map/area_stats',
             'map_heatmap_data': '/api/map/heatmap_data',
-            'map_sync_firebase': '/api/map/sync_to_firebase'
+            
+            # 地理編碼 (新功能)
+            'address_to_coords': '/api/geocoding/address-to-coordinates',
+            'coords_to_address': '/api/geocoding/coordinates-to-address',
+            'batch_geocode': '/api/geocoding/batch-geocode',
+            
+            # 便利功能
+            'nearby_foods': '/api/nearby_foods',
+            'available_foods': '/api/available_foods',
+            'my_posted_foods': '/api/my_posted_foods',
+            'my_reservations': '/api/my_reservations',
+            'confirm_pickup': '/api/confirm_pickup'
         },
-        'documentation': '/docs',
-        'map_test_tool': '/static/map_test.html'
+        'pages': {
+            'documentation': '/docs',
+            'map_interface': '/map',
+            'address_test': '/test-address',
+            'api_test': '/static/map_test.html'
+        },
+        'geocoding': {
+            'services': ['Nominatim (OpenStreetMap)', 'OpenCage (可選)', 'Mapbox (可選)'],
+            'primary_service': 'Nominatim (免費)',
+            'coverage': '台灣地區',
+            'features': ['地址轉經緯度', '經緯度轉地址', '批量轉換', '地址驗證']
+        }
     })
     return jsonify(
         {
@@ -131,6 +146,19 @@ def api_info():
         }
     )
 
+@app.route('/api/sync-firebase', methods=['POST'])
+def sync_to_firebase():
+    from firebase_food_service import FirebaseFoodService
+    from models import Food
+    
+    foods = Food.query.filter_by(status='available').all()
+    synced, errors, msg = FirebaseFoodService.sync_from_sqlite(foods)
+    
+    return jsonify({
+        'status': 'success',
+        'synced': synced,
+        'errors': errors
+    })
 
 # =============================
 # Firebase Token 驗證 + 自動補上資料庫帳號
@@ -262,28 +290,30 @@ with app.app_context():
 @app.route("/")
 def index():
     return jsonify({
-        'message': '🍽️ FoodShare 後端服務啟動成功！',
-        'api_docs': 'http://localhost:5000/docs',
-        'api_root': 'http://localhost:5000/api',
-        'map_test_tool': 'http://localhost:5000/static/map_test.html'
+        'message': '🍽️ FoodShare 剩食轉移平台',
+        'version': '1.2.0',
+        'status': '運行中',
+        'features': {
+            '🗺️ 免費地圖': 'http://localhost:5000/map',
+            '📍 地址轉換': 'http://localhost:5000/test-address',
+            '📚 API 文檔': 'http://localhost:5000/docs',
+            '🧪 API 測試': 'http://localhost:5000/static/map_test.html',
+            '📊 API 資訊': 'http://localhost:5000/api'
+        },
+        'new_features': [
+            '✅ 支援地址輸入，自動轉換為經緯度',
+            '✅ 免費地理編碼服務 (OpenStreetMap)',
+            '✅ 批量地址轉換',
+            '✅ 反向地理編碼 (座標轉地址)',
+            '✅ 台灣地區地址優化'
+        ],
+        'quick_start': [
+            '1. 前往 /test-address 測試地址轉換',
+            '2. 前往 /map 查看免費地圖',
+            '3. 使用 API 新增食物時可直接輸入地址',
+            '4. 系統會自動轉換為經緯度座標'
+        ]
     })
 
-# 🗺️ 提供地圖測試工具
-@app.route('/static/map_test.html')
-def map_test_tool():
-    """提供地圖測試工具頁面"""
-    return app.send_static_file('map_test.html') if app.static_folder else jsonify({
-        'error': '請將測試工具 HTML 放在 static 資料夾中'
-    })
-        
-
-
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
-        # return jsonify(
-        #     {
-        #         "message": "🍽️ FoodShare 後端服務啟動成功！",
-        #         "api_docs": "http://localhost:5000/docs",
-        #         "api_root": "http://localhost:5000/api",
-        #     }
-        # )
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
