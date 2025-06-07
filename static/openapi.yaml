@@ -1,0 +1,156 @@
+openapi: 3.0.0
+info:
+  title: 剩食轉移平台 API
+  version: 1.0.0
+  description: RESTful API 規格與範例
+servers:
+  - url: http://localhost:5000
+
+paths:
+  /api/post_food:
+    post:
+      summary: 上架剩食
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FoodCreate'
+            examples:
+              預設範例:
+                value:
+                  owner_id: 1
+                  title: "鮮奶吐司"
+                  description: "兩條，明天下午前請領"
+                  quantity: 2
+                  expire_time: "2025-06-08T12:00:00"
+                  lat: 25.033
+                  lng: 121.5654
+                  category: "麵包"
+                  image_url: "https://res.cloudinary.com/.../toast.jpg"
+      responses:
+        '200':
+          description: 上架成功
+  /api/nearby_foods:
+    get:
+      summary: 查詢附近剩食
+      parameters:
+        - in: query
+          name: lat
+          schema:
+            type: number
+            format: float
+          required: true
+        - in: query
+          name: lng
+          schema:
+            type: number
+            format: float
+          required: true
+      responses:
+        '200':
+          description: 回傳剩食列表
+          content:
+            application/json:
+              examples:
+                預設範例: 
+                  value:
+                    - id: 1
+                      title: "鮮奶吐司"
+                      description: "兩條"
+                      quantity: 2
+                      expire_time: "2025-06-08T12:00:00"
+                      owner_id: 1
+                      status: "available"
+                      category: "麵包"
+                      image_url: "https://.../toast.jpg"
+                      distance: 0.5
+  /api/reserve_food:
+    post:
+      summary: 預約剩食
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReserveRequest'
+            examples:
+              範例1: 
+                value: { food_id: 1, user_id: 2 }
+      responses:
+        '200':
+          description: 預約成功
+  /api/my_reservations:
+    get:
+      summary: 查詢我的預約
+      parameters:
+        - in: query
+          name: user_id
+          schema: { type: integer }
+          required: true
+      responses:
+        '200':
+          description: 我的預約清單
+          content:
+            application/json:
+              examples:
+                預設範例:
+                  value:
+                    - id: 1
+                      food_id: 1
+                      reserve_time: "2025-06-07T15:00:00"
+                      status: "reserved"
+components:
+  schemas:
+    FoodCreate:
+      type: object
+      required:
+        - owner_id
+        - title
+        - quantity
+        - expire_time
+        - lat
+        - lng
+      properties:
+        owner_id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "鮮奶吐司"
+        description:
+          type: string
+          example: "兩條，明天下午前請領"
+        quantity:
+          type: integer
+          example: 2
+        expire_time:
+          type: string
+          format: date-time
+          example: "2025-06-08T12:00:00"
+        lat:
+          type: number
+          format: float
+          example: 25.033
+        lng:
+          type: number
+          format: float
+          example: 121.5654
+        category:
+          type: string
+          example: "麵包"
+        image_url:
+          type: string
+          example: "https://res.cloudinary.com/.../toast.jpg"
+    ReserveRequest:
+      type: object
+      required:
+        - food_id
+        - user_id
+      properties:
+        food_id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 2
