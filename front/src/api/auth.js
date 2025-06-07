@@ -4,7 +4,7 @@ const Auth = {
   //Sign up for the system
   signUp: (body) => api.post('/auth/signup', body),
   // Sign in to the system
-  signIn: (body) => api.post('/auth/signin', body),
+  signIn: (body) => api.post('/login', body),
   // Sign out of the system
   signOut: (body) => api.delete('/auth/signin', { data: body }),
   // Refresh the access token

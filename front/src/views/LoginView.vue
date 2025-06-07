@@ -1,50 +1,94 @@
 <template>
-  <BaseBanner
-    :is-open="notificationData.open.value"
-    :type="notificationData.type.value"
-    :headline="notificationData.headline.value"
-    :content="notificationData.content.value"
-    @close="notificationData.open.value = false"
-  />
-  <div class="items-center justify-center flex min-h-fit h-[calc(100svh-8rem)] m-8">
-    <FormBox
-      class="m-0 max-md:w-full max-lg:w-10/12 lg:block lg:w-2/3 xl:w-1/2 md:m-8 h-fit transition-all duration-100"
-      headline="歡迎回來"
-      subtitle1="請登入以繼續使用"
-    >
-      <form class="w-full" @submit.prevent="handleLogin">
-        <BaseInputPlace
-          v-model="email"
-          label="電子郵件地址"
-          placeholder="輸入您的電子郵件"
-          class="w-full mb-4"
-        ></BaseInputPlace>
-        <PasswordInput
-          v-model="password"
-          label="密碼"
-          type="password"
-          placeholder="輸入您的密碼"
-          class="w-full"
-        ></PasswordInput>
-        <div class="flex items-center justify-between my-4 w-full">
-          <InputCheck class="flex items-center my-4">
-            <label>記住我</label>
-          </InputCheck>
-          <BaseLink text="忘記密碼？" link="/forget-password"></BaseLink>
-        </div>
-        <LoginBlueButton button-text="登入" type="submit" width="w-full" @click="handleLogin" />
-      </form>
-      <div class="w-full h-px bg-gray-300 my-6"></div>
-      <div class="text-center">
-        <BaseLink text="還沒有帳號嗎？註冊" link="/register"></BaseLink>
-      </div>
-    </FormBox>
+  <div class="p-4">
+    <h2 class="text-xl font-bold mb-2">登入</h2>
+    <input v-model="email" placeholder="輸入 Email" /><br />
+    <input v-model="password" type="password" placeholder="輸入密碼" /><br />
 
-    <img src="/src/assets/login-placeholder.png" class="hidden overflow-hidden lg:block lg:w-1/3 top-1/2" />
+    <button @click="loginWithEmail" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">用帳號密碼登入</button>
+    <button @click="googleLogin" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+      🔐 使用 Google 登入
+    </button>
+    <pre class="mt-4 whitespace-pre-wrap bg-gray-100 p-4 rounded">{{ result }}</pre>
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
+import { initializeApp } from 'firebase/app'
+import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
+import Auth from '@/api/auth'
+
+const email = ref('')
+const password = ref('')
+
+// ✅ Firebase 設定
+const firebaseConfig = {
+  apiKey: "AIzaSyCN25Bd28KyvxpJt3P-YPkSTsLnupKbfQU",
+  authDomain: "gdg-foodshare.firebaseapp.com",
+  projectId: "gdg-foodshare",
+  storageBucket: "gdg-foodshare.firebasestorage.app",
+  messagingSenderId: "202811512487",
+  appId: "1:202811512487:web:75d7b523db4daf36a6ad82",
+  measurementId: "G-2FDN861HWZ"
+}
+
+// ✅ 初始化 Firebase
+const result = ref('')
+let auth
+
+onMounted(() => {
+  const app = initializeApp(firebaseConfig)
+  auth = getAuth(app)
+})
+
+async function googleLogin() {
+  const provider = new GoogleAuthProvider()
+  try {
+    const signInResult = await signInWithPopup(auth, provider)
+    const token = await signInResult.user.getIdToken()
+    console.log('ID Token:', token)
+    result.value = `✅ 成功登入\n\nID Token:\n${token}`
+
+    // ✅ 傳 token 到後端測試驗證
+    const response = await fetch('http://127.0.0.1:5000/secure', {
+      headers: {
+        Authorization: 'Bearer ' + token
+      }
+    })
+    const data = await response.json()
+    result.value += `\n\n🎯 後端回應：\n${JSON.stringify(data, null, 2)}`
+  } catch (err) {
+    console.error(err)
+    result.value = '❌ 登入失敗：' + err.message
+  }
+}
+const loginWithEmail = async () => {
+  try {
+    const response = await Auth.signIn({
+      email: email.value,
+      passwd: password.value,
+    })
+
+    if (response.status === 200) {
+      result.value = '✅ 傳統登入成功，User ID：' + response.data.user_id
+      window.location.href = '/'
+    } else {
+      result.value = '❌ 登入失敗，帳號或密碼錯誤'
+    }
+  } catch (err) {
+    result.value = '❌ 登入錯誤：' + err.message
+  }
+}
+</script>
+
+<style scoped>
+pre {
+  font-family: monospace;
+}
+</style>
+
+
+<!-- <script setup>
   import { ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { useAuthStore } from '@/stores/authStore'
@@ -107,4 +151,4 @@
       notificationData.content.value = '伺服器發生錯誤，請稍後再試。'
     }
   }
-</script>
+</script> -->
