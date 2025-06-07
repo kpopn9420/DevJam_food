@@ -7,67 +7,101 @@ servers:
   - url: http://localhost:5000
 
 paths:
-  /api/post_food:
+  /api/foods:
+    get:
+      summary: 取得所有食物
+      responses:
+        '200':
+          description: 成功取得食物列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Food'
     post:
-      summary: 上架剩食
+      summary: 新增食物
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FoodCreate'
-            examples:
-              預設範例:
-                value:
-                  owner_id: 1
-                  title: "鮮奶吐司"
-                  description: "兩條，明天下午前請領"
-                  quantity: 2
-                  expire_time: "2025-06-08T12:00:00"
-                  lat: 25.033
-                  lng: 121.5654
-                  category: "麵包"
-                  image_url: "https://res.cloudinary.com/.../toast.jpg"
+              $ref: '#/components/schemas/NewFood'
       responses:
-        '200':
-          description: 上架成功
-  /api/nearby_foods:
-    get:
-      summary: 查詢附近剩食
-      parameters:
-        - in: query
-          name: lat
-          schema:
-            type: number
-            format: float
-          required: true
-        - in: query
-          name: lng
-          schema:
-            type: number
-            format: float
-          required: true
-      responses:
-        '200':
-          description: 回傳剩食列表
+        '201':
+          description: 食物建立成功
           content:
             application/json:
-              examples:
-                預設範例: 
-                  value:
-                    - id: 1
-                      title: "鮮奶吐司"
-                      description: "兩條"
-                      quantity: 2
-                      expire_time: "2025-06-08T12:00:00"
-                      owner_id: 1
-                      status: "available"
-                      category: "麵包"
-                      image_url: "https://.../toast.jpg"
-                      distance: 0.5
-  /api/reserve_food:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  food_id:
+                    type: integer
+
+  /api/foods/{food_id}:
+    parameters:
+      - name: food_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: 取得單筆食物
+      responses:
+        '200':
+          description: 成功取得食物
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Food'
+        '404':
+          description: 找不到指定的食物
+    put:
+      summary: 更新食物
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFood'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  food:
+                    $ref: '#/components/schemas/Food'
+        '404':
+          description: 找不到指定的食物
+    delete:
+      summary: 刪除食物
+      responses:
+        '200':
+          description: 刪除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '404':
+          description: 找不到指定的食物
+
+  # 🔥 修復：統一使用 /api/reservations（複數）
+  /api/reservations:
     post:
-      summary: 預約剩食
+      summary: 預約食物
       requestBody:
         required: true
         content:
@@ -75,38 +109,213 @@ paths:
             schema:
               $ref: '#/components/schemas/ReserveRequest'
             examples:
-              範例1: 
-                value: { food_id: 1, user_id: 2 }
+              範例1:
+                value:
+                  food_id: 1
+                  user_id: 2
       responses:
-        '200':
+        '201':
           description: 預約成功
-  /api/my_reservations:
-    get:
-      summary: 查詢我的預約
-      parameters:
-        - in: query
-          name: user_id
-          schema: { type: integer }
-          required: true
-      responses:
-        '200':
-          description: 我的預約清單
           content:
             application/json:
-              examples:
-                預設範例:
-                  value:
-                    - id: 1
-                      food_id: 1
-                      reserve_time: "2025-06-07T15:00:00"
-                      status: "reserved"
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  reservation_id:
+                    type: integer
+        '400':
+          description: 請求參數錯誤
+        '404':
+          description: 食物或用戶不存在
+        '409':
+          description: 食物已被預約或其他衝突
+    get:
+      summary: 取得所有預約
+      responses:
+        '200':
+          description: 成功取得預約列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reservation'
+
+  /api/reservations/{reservation_id}:
+    parameters:
+      - name: reservation_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: 取得單筆預約
+      responses:
+        '200':
+          description: 成功取得預約
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '404':
+          description: 找不到指定的預約
+    put:
+      summary: 更新預約
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReservation'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  reservation:
+                    $ref: '#/components/schemas/Reservation'
+        '404':
+          description: 找不到指定的預約
+    delete:
+      summary: 刪除預約
+      responses:
+        '200':
+          description: 刪除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '404':
+          description: 找不到指定的預約
+
+  # 🔥 新增：其他實際存在的 API 端點
+  /api/nearby_foods:
+    get:
+      summary: 取得附近的食物
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+      responses:
+        '200':
+          description: 成功取得附近食物列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FoodWithDistance'
+
+  /api/available_foods:
+    get:
+      summary: 取得所有可用食物
+      responses:
+        '200':
+          description: 成功取得可用食物列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AvailableFood'
+
+  /api/my_posted_foods:
+    get:
+      summary: 取得我發布的食物
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功取得發布的食物列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Food'
+
+  /api/my_reservations:
+    get:
+      summary: 取得我的預約記錄
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功取得預約記錄
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MyReservation'
+
+  /api/confirm_pickup:
+    post:
+      summary: 確認取餐完成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reservation_id
+              properties:
+                reservation_id:
+                  type: integer
+                  example: 1
+      responses:
+        '200':
+          description: 取餐確認成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: 取餐確認完成
+
 components:
   schemas:
-    FoodCreate:
+    NewFood:
       type: object
       required:
         - owner_id
-        - title
+        - name 
         - quantity
         - expire_time
         - lat
@@ -115,7 +324,7 @@ components:
         owner_id:
           type: integer
           example: 1
-        title:
+        name:  # 🔥 修復：統一使用 name
           type: string
           example: "鮮奶吐司"
         description:
@@ -142,6 +351,93 @@ components:
         image_url:
           type: string
           example: "https://res.cloudinary.com/.../toast.jpg"
+
+    UpdateFood:
+      type: object
+      properties:
+        name:  # 🔥 修復：統一使用 name
+          type: string
+        description:
+          type: string
+        quantity:
+          type: integer
+        expire_time:
+          type: string
+          format: date-time
+        lat:
+          type: number
+          format: float
+        lng:
+          type: number
+          format: float
+        category:
+          type: string
+        image_url:
+          type: string
+
+    Food:
+      allOf:
+        - $ref: '#/components/schemas/NewFood'
+        - type: object
+          properties:
+            id:
+              type: integer
+            status:
+              type: string
+              example: available
+            created_at:
+              type: string
+              format: date-time
+
+    FoodWithDistance:
+      allOf:
+        - $ref: '#/components/schemas/Food'
+        - type: object
+          properties:
+            distance:
+              type: number
+              format: float
+              example: 0.5
+
+    AvailableFood:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        category:
+          type: string
+        lat:
+          type: number
+          format: float
+        lng:
+          type: number
+          format: float
+        image_url:
+          type: string
+        expire_time:
+          type: string
+          format: date-time
+
+    MyReservation:
+      type: object
+      properties:
+        id:
+          type: integer
+        food_id:
+          type: integer
+        food_name:
+          type: string
+        reserve_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+        scheduled_pickup_time:
+          type: string
+          format: date-time
+
     ReserveRequest:
       type: object
       required:
@@ -154,3 +450,59 @@ components:
         user_id:
           type: integer
           example: 2
+
+    UpdateReservation:
+      type: object
+      properties:
+        status:
+          type: string
+          example: completed
+        scheduled_pickup_time:
+          type: string
+          format: date-time
+        actual_pickup_time:
+          type: string
+          format: date-time
+        pickup_lat:
+          type: number
+          format: float
+        pickup_lng:
+          type: number
+          format: float
+        des:
+          type: string
+
+    Reservation:
+      type: object
+      properties:
+        id:
+          type: integer
+        food_id:
+          type: integer
+        owner_id:
+          type: integer
+        receiver_id:
+          type: integer
+        status:
+          type: string
+          example: reserved
+        reserve_time:
+          type: string
+          format: date-time
+        scheduled_pickup_time:
+          type: string
+          format: date-time
+        actual_pickup_time:
+          type: string
+          format: date-time
+        pickup_lat:
+          type: number
+          format: float
+        pickup_lng:
+          type: number
+          format: float
+        des:
+          type: string
+        created_at:
+          type: string
+          format: date-time

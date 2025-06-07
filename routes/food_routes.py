@@ -15,8 +15,8 @@ def haversine(lat1, lon1, lat2, lon2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
 
-@food_bp.route('/api/post_food', methods=['POST'])
-def post_food():
+@food_bp.route('/api/foods', methods=['POST'])
+def foods():
     data = request.get_json() or {}
     required = ['owner_id', 'title', 'quantity', 'expire_time', 'lat', 'lng']
     if not all(k in data for k in required):
@@ -45,6 +45,53 @@ def post_food():
     db.session.commit()
     return jsonify({'status': 'success', 'message': '上架成功', 'food_id': food.id})
 
+@food_bp.route('/api/foods', methods=['GET'])
+def list_foods():
+    foods = Food.query.all()
+    return jsonify([f.to_dict() for f in foods])
+
+# GET /api/foods/<int:food_id> → 單筆細節
+@food_bp.route('/api/foods/<int:food_id>', methods=['GET'])
+def get_food(food_id):
+    food = Food.query.get_or_404(food_id)
+    return jsonify(food.to_dict())
+
+# PUT /api/foods/<int:food_id>
+@food_bp.route('/api/foods/<int:food_id>', methods=['PUT'])
+def update_food(food_id):
+    data = request.get_json() or {}
+    food = Food.query.get_or_404(food_id)
+
+    # 更新你允許的欄位
+    if 'name' in data:
+        food.name = data['name']
+    if 'category' in data:
+        food.category = data['category']
+    if 'lat' in data:
+        food.lat = float(data['lat'])
+    if 'lng' in data:
+        food.lng = float(data['lng'])
+    if 'expire_time' in data:
+        raw = data['expire_time']
+        # 如果結尾是 Z，就轉成 +00:00
+        if raw.endswith('Z'):
+            raw = raw[:-1] + '+00:00'
+        food.expire_time = datetime.fromisoformat(raw)
+    if 'image_url' in data:
+        food.image_url = data['image_url']
+
+    db.session.commit()
+    return jsonify({'status': 'success', 'food': food.to_dict()})
+
+# DELETE /api/foods/<int:food_id>
+@food_bp.route('/api/foods/<int:food_id>', methods=['DELETE'])
+def delete_food(food_id):
+    food = Food.query.get_or_404(food_id)
+    db.session.delete(food)
+    db.session.commit()
+    return jsonify({'status': 'success'})
+
+
 @food_bp.route('/api/nearby_foods', methods=['GET'])
 def nearby_foods():
     try:
@@ -71,6 +118,22 @@ def nearby_foods():
         })
     results = sorted(results, key=lambda x: x['distance'])[:5]
     return jsonify(results)
+
+@food_bp.route('/api/available_foods', methods=['GET'])
+def available_foods():
+    foods = Food.query.filter_by(status='available').all()
+    return jsonify([
+        {
+            'id': f.id,
+            'title': f.name,
+            'category': f.category,
+            'lat': f.lat,
+            'lng': f.lng,
+            'image_url': f.image_url,
+            'expire_time': f.expire_time.isoformat()
+        }
+        for f in foods
+    ])
 
 @food_bp.route('/api/my_posted_foods', methods=['GET'])
 def my_posted_foods():
