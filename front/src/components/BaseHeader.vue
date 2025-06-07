@@ -23,14 +23,6 @@
             {{ websiteName }}
           </span>
         </router-link>
-        <BaseButtonOutlined
-          link="/faq"
-          size="md"
-          button-text="常見問題"
-          border-color="border-blue-500 hover:border-blue-700"
-          hover-background-color="bg-blue-100 hover:bg-blue-300"
-          text-color="text-blue-500 hover:text-blue-700"
-        />
       </div>
     </div>
   </nav>
