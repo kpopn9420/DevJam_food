@@ -37,6 +37,7 @@ class Reservation(db.Model):
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     receiver_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     status = db.Column(db.String(20), default='reserved')  # reserved, completed, expired
+    # 訂單成立時間
     reserve_time = db.Column(db.DateTime, default=datetime.utcnow)
     # 使用者預約時約定的取餐時間，如果需要固定時間取餐，可設定
     scheduled_pickup_time = db.Column(db.DateTime)
@@ -47,7 +48,7 @@ class Reservation(db.Model):
     pickup_lng = db.Column(db.Float)
     # 取餐備註
     des = db.Column(db.String(250))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     food = db.relationship('Food', backref=db.backref('reservations', lazy=True))
     owner = db.relationship('User', foreign_keys=[owner_id])

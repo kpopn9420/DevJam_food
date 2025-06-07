@@ -34,6 +34,7 @@ def reserve_food():
 @reservation_bp.route('/api/my_reservations', methods=['GET'])
 def my_reservations():
     user_id = request.args.get('user_id', type=int)
+    
     if user_id is None:
         return jsonify({'status': 'error', 'message': '缺少 user_id'}), 400
     res_list = Reservation.query.filter_by(receiver_id=user_id).all()

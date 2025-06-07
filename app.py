@@ -22,7 +22,7 @@ swagger_bp = get_swaggerui_blueprint(
 app.register_blueprint(swagger_bp, url_prefix='/docs')
 # 本機 MySQL 設定（依照你自己的設定修改）
 # app.py
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dev.sqlite3'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/foodsystem'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
