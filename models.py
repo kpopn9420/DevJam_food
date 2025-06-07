@@ -156,11 +156,10 @@ class ESGLog(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
-# 🔥 新增：資料庫初始化函式
-def init_db():
-    """初始化資料庫，建立所有表格"""
-    db.create_all()
-    print("✅ 資料庫表格建立完成")
+def init_db(app):
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
 
 def drop_all_tables():
     """刪除所有表格"""
