@@ -1,0 +1,22 @@
+stages:
+  - lint
+  - deploy
+
+lint:
+  image: node
+  stage: lint
+  script:
+    - npm install eslint
+    - npm install eslint-config-prettier
+    - npm install eslint-plugin-import
+    - npm install eslint-plugin-vue
+    - npm run lint
+    - npm run format
+
+deploy:
+  stage: deploy
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - docker compose down --remove-orphans
+    - docker compose up --build -d

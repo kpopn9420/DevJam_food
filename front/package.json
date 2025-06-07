@@ -1,0 +1,51 @@
+{
+  "name": "frontend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test:unit": "vitest",
+    "lint": "eslint --fix src",
+    "format": "prettier . --write",
+    "lint-check": "eslint 'src/**/*.{js,vue}'",
+    "format-check": "prettier --check 'src/**/*.{js,vue,json,md}'"
+  },
+  "dependencies": {
+    "@headlessui/vue": "^1.7.23",
+    "@heroicons/vue": "^2.2.0",
+    "@iconify-prerendered/vue-jam": "^0.25.1722794135",
+    "@iconify-prerendered/vue-svg-spinners": "^0.28.1673787445",
+    "@popperjs/core": "^2.11.8",
+    "axios": "^1.7.7",
+    "clsx": "^2.1.1",
+    "jwt-decode": "^4.0.0",
+    "pinia": "^2.1.7",
+    "prettier-plugin-vue": "^1.1.6",
+    "qrcode.vue": "^3.6.0",
+    "tailwind-merge": "^3.3.0",
+    "v-calendar": "^3.1.2",
+    "vue": "^3.4.29",
+    "vue-qrcode-reader": "^5.5.11",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.5",
+    "@vitejs/plugin-vue-jsx": "^4.0.0",
+    "@vue/test-utils": "^2.4.6",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.13.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-vue": "^9.29.0",
+    "jsdom": "^24.1.0",
+    "postcss": "^8.4.47",
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.8",
+    "tailwindcss": "^3.4.13",
+    "vite": "^5.3.1",
+    "vitest": "^1.6.0"
+  }
+}

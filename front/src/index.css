@@ -1,0 +1,51 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Pissed off because v-calendar can't change styles with class */
+
+/* Header */
+.vc-header {
+  @apply mb-2 mt-0;
+}
+
+/* Arrow icons */
+.vc-arrow {
+  @apply bg-white hover:!bg-white;
+}
+
+.vc-arrow:hover > .vc-base-icon {
+  @apply h-8 w-8 bg-gray-100 text-gray-700 transition-all duration-100;
+}
+
+/* This is a hack because .vc-arrow is in a grid, and it's size can't be changed. */
+.vc-arrow > .vc-base-icon {
+  @apply h-8 w-8 rounded-md text-gray-500 transition-all duration-100 hover:bg-gray-100;
+}
+
+/* Normal days in the calendar */
+.vc-day.in-month .vc-day-content.vc-highlight-content-solid {
+  @apply border-0 bg-blue-500 font-medium text-white ring-0 transition-all duration-100 focus:outline-none;
+}
+
+.vc-day .vc-day-content {
+  @apply border border-transparent text-sm font-medium text-gray-800 outline-none ring-0 transition-all duration-100 hover:bg-blue-100 hover:text-blue-500;
+}
+
+/* Show days that are not in the current month */
+.vc-day.is-not-in-month .vc-day-content {
+  @apply text-gray-300 opacity-100;
+}
+
+.vc-bars span {
+  @apply -mb-2 h-0.5 bg-gray-300;
+}
+
+/* Reset default styles*/
+.vc-focus:focus-within {
+  box-shadow: none;
+}
+
+.vc-day > .vc-highlights {
+  @apply invisible;
+}
