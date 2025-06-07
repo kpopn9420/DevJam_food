@@ -1,15 +1,15 @@
 <template>
-  <div class="relative top-16 w-full max-w-sm px-4">
-    <Popover v-slot="{ open }" class="relative">
-      <!-- 🔸 透明按鈕加 icon -->
+  <div class="relative">
+    <Popover v-slot="{ open, close }" class="relative z-20">
+      <!-- ⋮ 按鈕 -->
       <PopoverButton
         class="p-2 rounded-full hover:bg-gray-100 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500"
         aria-label="More options"
       >
-        <EllipsisHorizontalIcon class="h-5 w-5 text-gray-600 rotate-90" />
+        <span class="text-xl text-gray-700">⋮</span>
       </PopoverButton>
 
-      <!-- 🔹 往上顯示的 dropdown panel -->
+      <!-- 下拉選單 -->
       <transition
         enter-active-class="transition duration-200 ease-out"
         enter-from-class="translate-y-2 opacity-0"
@@ -19,23 +19,21 @@
         leave-to-class="translate-y-2 opacity-0"
       >
         <PopoverPanel
-          class="absolute right-0 bottom-12 z-10 mb-2 w-screen max-w-sm transform px-4 sm:px-0"
+          class="absolute right-0 bottom-12 z-30 mt-2 w-64 transform px-4 sm:px-0"
         >
-          <div class="overflow-hidden rounded-lg shadow-lg ring-1 ring-black/5">
-            <div
-              class="relative grid gap-8 bg-white p-7"
-              :class="{ 'lg:grid-cols-2': options.length > 1 }"
-            >
-              <a
+          <div class="overflow-hidden rounded-lg shadow-lg ring-1 ring-black/5 bg-white">
+            <div class="flex flex-col gap-2 p-4">
+              <button
                 v-for="item in options"
                 :key="item.name"
-                :href="item.href"
-                class="-m-3 flex items-center rounded-lg p-2 transition duration-150 ease-in-out hover:bg-gray-50 focus:outline-none focus-visible:ring focus-visible:ring-orange-500/50"
+                type="button"
+                @click="() => handleClick(item, close)"
+                class="flex items-center w-full text-left rounded-lg p-2 transition hover:bg-gray-100 focus:outline-none focus-visible:ring focus-visible:ring-blue-500/50"
               >
-                <div class="flex h-10 w-10 shrink-0 items-center justify-center text-white sm:h-12 sm:w-12">
-                  <div v-html="item.icon"></div>
+                <div class="flex h-10 w-10 items-center justify-center">
+                  <component :is="item.icon" class="h-5 w-5 text-blue-500" />
                 </div>
-                <div class="ml-4">
+                <div class="ml-4 text-left">
                   <p class="text-sm font-medium text-gray-900">
                     {{ item.name }}
                   </p>
@@ -43,22 +41,7 @@
                     {{ item.description }}
                   </p>
                 </div>
-              </a>
-            </div>
-            <div class="bg-gray-50 p-4">
-              <a
-                href="#"
-                class="flow-root rounded-md px-2 py-2 transition duration-150 ease-in-out hover:bg-gray-100 focus:outline-none focus-visible:ring focus-visible:ring-orange-500/50"
-              >
-                <span class="flex items-center">
-                  <span class="text-sm font-medium text-gray-900">
-                    Documentation
-                  </span>
-                </span>
-                <span class="block text-sm text-gray-500">
-                  Start integrating products and tools
-                </span>
-              </a>
+              </button>
             </div>
           </div>
         </PopoverPanel>
@@ -69,7 +52,7 @@
 
 <script setup>
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
-import { EllipsisHorizontalIcon } from '@heroicons/vue/20/solid'
+
 
 defineProps({
   options: {
@@ -77,4 +60,9 @@ defineProps({
     required: true,
   },
 })
+
+function handleClick(item) {
+  item.onClick?.()
+  close?.()
+}
 </script>

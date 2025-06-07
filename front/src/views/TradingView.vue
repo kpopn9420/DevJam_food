@@ -52,7 +52,7 @@
                 placeholder="Please enter the address..."
               ></BaseInputPlace>
             </div>
-            <div class="mb-4">
+            <div>
               <BaseInputText
                 v-model="newAnnouncementContent"
                 label="補充說明"
@@ -60,6 +60,41 @@
                 class="resize-y min-h-32"
               ></BaseInputText>
             </div>
+            <div class="flex items-center justify-start mb-2">
+              <BaseButtonOutlined
+                button-text="上傳照片"
+                size="md"
+                link=""
+                border-color="border-blue-500"
+                text-color="text-blue-500"
+                @click="openFile('FoodPicture')"
+              ></BaseButtonOutlined>
+              <div v-if="!fileData?.FoodPicture?.file" class="px-3"></div>
+              <div v-else class="px-3 flex items-center">
+                {{ fileData.FoodPicture.file?.name || '無名稱檔案' }}
+                <TrashIcon class="px-1 w-8 h-8 text-gray-500" @click="deleteFile('FoodPicture')" />
+              </div>
+            </div>
+            <PageDialog dialog-title="上傳照片" :is-open="isFileOpen" @close="closeFile">
+                <div class="mb-4">
+                  <InputFile :file-types="'jpg, jpeg, png'" @drop.prevent="drop" @change="selectedFile" />
+                </div>
+
+                <div v-if="fileData[fileType]?.file" class="text-sm text-gray-600 mt-2">
+                  <p>檔案名稱：{{ fileData[fileType]?.file?.name }}</p>
+                  <p>檔案大小：{{ (fileData[fileType]?.file?.size / 1024).toFixed(2) }} KB</p>
+                </div>
+
+                <div v-if="fileData[fileType]?.url" class="mt-4">
+                  <p class="text-sm text-gray-600">檔案預覽：</p>
+                  <a :href="fileData[fileType]?.url" target="_blank" class="text-blue-500 hover:underline"
+                    >點此查看檔案</a
+                  >
+                </div>
+                <div class="mt-4">
+                  <BaseButtonFilled button-text="儲存檔案" @click="handleSaveFile" />
+                </div>
+              </PageDialog>
             <div class="mt-4">
               <BaseButtonFilled button-text="儲存" class="w-full" @click="addAnnouncement" />
             </div>
@@ -82,6 +117,7 @@
             v-for="n in 12"
             :key="n"
             title="Delicious Pizza"
+            role="viewer"
             description="A cheesy and delightful pizza topped with pepperoni."
         />
     </div>
@@ -102,14 +138,23 @@
   import SelectDate from '@/components/selectDate.vue'
   import CheckBox from '@/components/InputCheck.vue'
   import Card from '@/components/Card.vue'
+  import InputFile from '@/components/InputFile.vue'
   import { useFileHandler } from '@/composables/useFileHandler'
+  import { TrashIcon } from '@heroicons/vue/24/outline'
 
-  // 彈出式通知的資料
   const notificationData = {
     open: ref(false),
     type: ref('info'),
     headline: ref('系統通知'),
     content: ref('這是一則系統通知'),
+  }
+
+  // 彈出式通知的資料
+  const notificationHandler = (notification) => {
+    notificationData.open.value = true
+    notificationData.type.value = notification.type
+    notificationData.headline.value = notification.headline
+    notificationData.content.value = notification.content
   }
 
   const AddFoodDialog = ref(false)
@@ -120,6 +165,33 @@
 
   const CancelFood = () => {
     AddFoodDialog.value = false
+  }
+
+  const {
+    fileData,
+    fileType,
+    isFileOpen,
+    initializeFileData,
+    openFile,
+    closeFile,
+    drop,
+    selectedFile,
+    deleteFile,
+    saveFile,
+  } = useFileHandler(notificationHandler)
+
+  initializeFileData(['FoodPicture'])
+  const saveHandlers = {
+    FoodPicture: async (file) => {
+      console.log('Saving PDF Course file:', file)
+      console.log('File name:', file.name)
+    }
+  }
+
+  const handleSaveFile = () => {
+    console.log(fileData)
+    console.log(fileData.name)
+    saveFile(saveHandlers)
   }
   
 </script>
